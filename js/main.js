@@ -10,6 +10,50 @@ const $ = (selector) => document.querySelector(selector);
 const checkIn = $('#check-in');
 const checkOut = $('#check-out');
 const localDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const parseDateTime = (value) => {
+  const match = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec((value || '').trim());
+  return match ? new Date(`${match[1]}T${match[2]}`) : null;
+};
+const formatDateTime = (date) => `${localDate(date)} at ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+const modalCheckIn = $('#modal-check-in');
+const modalCheckInTime = $('#modal-check-in-time');
+const modalCheckOut = $('#modal-check-out');
+const modalCheckOutTime = $('#modal-check-out-time');
+const basePickerConfig = {
+  allowInput: true,
+  disableMobile: true,
+  static: true,
+  dateFormat: 'Y-m-d',
+  minDate: 'today'
+};
+const timePickerConfig = {
+  enableTime: true,
+  noCalendar: true,
+  dateFormat: 'H:i',
+  time_24hr: true,
+  minuteIncrement: 15,
+  allowInput: true,
+  disableMobile: true,
+  static: true
+};
+let checkInPicker = null;
+let checkOutPicker = null;
+let checkInTimePicker = null;
+let checkOutTimePicker = null;
+if (window.flatpickr) {
+  checkInPicker = window.flatpickr(modalCheckIn, {
+    ...basePickerConfig,
+    onChange: (dates) => {
+      const date = dates[0] || null;
+      checkOutPicker.set('minDate', date ? localDate(date) : 'today');
+      const checkOutDate = checkOutPicker.selectedDates[0];
+      if (date && checkOutDate && checkOutDate < date) checkOutPicker.clear();
+    }
+  });
+  checkInTimePicker = window.flatpickr(modalCheckInTime, { ...timePickerConfig, defaultHour: 12, defaultMinute: 0 });
+  checkOutPicker = window.flatpickr(modalCheckOut, { ...basePickerConfig });
+  checkOutTimePicker = window.flatpickr(modalCheckOutTime, { ...timePickerConfig, defaultHour: 11, defaultMinute: 0 });
+}
 checkIn.min = localDate(new Date());
 checkOut.min = checkIn.min;
 checkIn.addEventListener('change', () => {
@@ -24,7 +68,7 @@ function render() {
   let visible = rooms.filter(room => (state.type === 'all' || room.type === state.type) && (state.ac === 'any' || room.ac === state.ac) && (state.guests === 'any' || room.guests >= Number(state.guests)));
   if (state.sort === 'name') visible.sort((a, b) => a.name.localeCompare(b.name));
   if (state.sort === 'guests') visible.sort((a, b) => a.guests - b.guests);
-  $('#room-grid').innerHTML = visible.map(room => `<article class="room-card"><div class="room-photo"><img src="images/sample-room-image.png" alt="Illustrative room interior at Edappally Homestay" width="644" height="242" loading="lazy"><button class="favorite" data-favorite="${room.id}" aria-label="Save ${room.name}" aria-pressed="${state.favorites.has(room.id)}">${state.favorites.has(room.id) ? '♥' : '♡'}</button></div><div class="room-content"><p class="eyebrow">${room.name.toUpperCase()}</p><h3>${room.name}</h3><p class="room-meta">⌖ ${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'}</p><p class="room-description">${room.ac === 'ac' ? 'Air-conditioned room' : 'Non-air-conditioned room'}</p><p class="rate">Rate to be confirmed <small>per night</small></p><button class="text-link" data-details="${room.id}">View room <span aria-hidden="true">↗</span></button></div></article>`).join('');
+  $('#room-grid').innerHTML = visible.map(room => `<article class="room-card"><div class="room-photo"><img src="images/sample-room-image.png" alt="Illustrative room interior at Edappally Homestay" width="644" height="242" loading="lazy"><button class="favorite" data-favorite="${room.id}" aria-label="Save ${room.name}" aria-pressed="${state.favorites.has(room.id)}">${state.favorites.has(room.id) ? '♥' : '♡'}</button></div><div class="room-content"><p class="eyebrow">${room.name.toUpperCase()}</p><h3>${room.name}</h3><p class="room-meta">⌖ ${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'}</p><p class="room-description">${room.ac === 'ac' ? 'Air-conditioned room' : 'Non-air-conditioned room'}</p><p class="rate">Rate to be confirmed <small>per night</small></p><button class="button book-now" data-details="${room.id}">Book Now</button></div></article>`).join('');
   $('#no-results').hidden = visible.length > 0;
   document.querySelectorAll('[data-ac]').forEach(button => { const active = button.dataset.ac === state.ac; button.classList.toggle('active', active); button.setAttribute('aria-pressed', active); });
   document.querySelectorAll('[data-filter]').forEach(button => { const active = button.dataset.filter === 'ac' ? state.ac === 'ac' && state.type === 'all' : button.dataset.filter === state.type && !(state.ac === 'ac' && state.type === 'all'); button.classList.toggle('active', active); button.setAttribute('aria-pressed', active); });
@@ -49,18 +93,59 @@ $('#room-grid').addEventListener('click', event => {
   const room = rooms.find(room => room.id === details.dataset.details);
   $('#dialog-title').textContent = room.name;
   $('#dialog-description').textContent = `${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'} room. Photo is illustrative; confirm the assigned room when enquiring.`;
-  const dates = checkIn.value && checkOut.value ? `Requested stay: ${checkIn.value} to ${checkOut.value}` : '';
-  $('#dialog-dates').textContent = dates;
-  const enquiry = [
-    `Hello, I would like to enquire about ${room.name} at Edappally Homestay.`,
-    `Room capacity: ${room.guests} ${room.guests === 1 ? 'guest' : 'guests'}.`,
-    $('#guests').value !== 'any' ? `Requested guests: ${$('#guests').value}.` : '',
-    checkIn.value ? `Check-in: ${checkIn.value}` : '',
-    checkOut.value ? `Check-out: ${checkOut.value}` : '',
+  $('#room-dialog').dataset.room = room.id;
+  const checkInDateValue = checkIn.value || '';
+  const checkInTimeValue = '12:00';
+  const checkOutDateValue = checkOut.value || '';
+  const checkOutTimeValue = '11:00';
+  if (checkInPicker) {
+    checkInPicker.setDate(checkInDateValue, false);
+    checkInTimePicker.setDate(checkInTimeValue, false);
+    checkOutPicker.set('minDate', checkInDateValue || 'today');
+    checkOutPicker.setDate(checkOutDateValue, false);
+    checkOutTimePicker.setDate(checkOutTimeValue, false);
+  } else {
+    modalCheckIn.value = checkInDateValue;
+    modalCheckInTime.value = checkInTimeValue;
+    modalCheckOut.value = checkOutDateValue;
+    modalCheckOutTime.value = checkOutTimeValue;
+  }
+  [modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.setCustomValidity(''));
+  $('#room-dialog').showModal();
+});
+[modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.addEventListener('input', () => input.setCustomValidity('')));
+$('#reserve-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const room = rooms.find(room => room.id === $('#room-dialog').dataset.room);
+  if (!room) return;
+  const start = parseDateTime(`${modalCheckIn.value} ${modalCheckInTime.value}`);
+  const end = parseDateTime(`${modalCheckOut.value} ${modalCheckOutTime.value}`);
+  if (!start) {
+    modalCheckInTime.setCustomValidity('Please pick a valid check-in date and time.');
+    modalCheckInTime.reportValidity();
+    return;
+  }
+  if (!end) {
+    modalCheckOutTime.setCustomValidity('Please pick a valid check-out date and time.');
+    modalCheckOutTime.reportValidity();
+    return;
+  }
+  if (end <= start) {
+    modalCheckOutTime.setCustomValidity('Check-out must be after check-in.');
+    modalCheckOutTime.reportValidity();
+    return;
+  }
+  modalCheckInTime.setCustomValidity('');
+  modalCheckOutTime.setCustomValidity('');
+  const guests = $('#guests').value;
+  const message = [
+    `Hello, I would like to reserve ${room.name} at Edappally Homestay.`,
+    `Check-in: ${formatDateTime(start)}`,
+    `Check-out: ${formatDateTime(end)}`,
+    guests !== 'any' ? `Guests: ${guests}` : '',
     'Please confirm availability and the nightly rate. Thank you.'
   ].filter(Boolean).join('\n');
-  $('#enquiry-link').href = `https://wa.me/918667373306?text=${encodeURIComponent(enquiry)}`;
-  $('#room-dialog').showModal();
+  window.open(`https://wa.me/918667373306?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
 });
 $('.dialog-close').addEventListener('click', () => $('#room-dialog').close());
 $('#room-dialog').addEventListener('click', event => { if (event.target === $('#room-dialog')) { const bounds = event.target.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.target.close(); } });
