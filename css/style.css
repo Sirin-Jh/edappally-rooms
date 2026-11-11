@@ -6,12 +6,12 @@
 .favorite{display:none}
 .book-now{margin-top:14px;padding:12px 28px;border-radius:999px;font-size:13px}
 .reserve-form{margin-top:4px}
-.reserve-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:18px}
-.reserve-field{display:flex;flex-direction:column;gap:6px}
+.reserve-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.reserve-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .reserve-field .field-label{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
-.reserve-field input{width:100%;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--green)}
+.reserve-field input,.reserve-field select{width:100%;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--green)}
 .reserve-field input::placeholder{color:#9aa096}
-.reserve-field input:focus{outline:3px solid #e99758;outline-offset:2px}
+.reserve-field input:focus,.reserve-field select:focus{outline:3px solid #e99758;outline-offset:2px}
 .reserve-button{width:100%;border-radius:999px;justify-content:center}
 .flatpickr-calendar{font-family:inherit;box-shadow:0 10px 30px rgba(20,59,48,.18)}
 .flatpickr-day.selected,.flatpickr-day.startRange,.flatpickr-day.endRange,.flatpickr-day.selected:focus,.flatpickr-day.selected:hover,.flatpickr-day.startRange:hover,.flatpickr-day.endRange:hover{background:var(--orange);border-color:var(--orange)}
@@ -19,3 +19,5 @@
 .flatpickr-day.today:hover{background:var(--pale);color:var(--green)}
 .flatpickr-time input:hover,.flatpickr-time input:focus{background:var(--pale)}
 .flatpickr-current-month,.flatpickr-months .flatpickr-month{color:var(--green)}
+
+.reserve-field input,.reserve-field select{min-height:48px;font-size:14px;font-weight:500;color-scheme:light}.reserve-field select{cursor:pointer;padding-right:8px}.reserve-field input[type=date]{cursor:pointer}.reserve-field input[type=date]::-webkit-calendar-picker-indicator{width:20px;height:20px;padding:2px;cursor:pointer}.stay-summary{font-size:12px;padding:10px 12px;background:var(--pale);border-radius:8px;color:var(--green)}

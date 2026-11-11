@@ -19,41 +19,36 @@ const modalCheckIn = $('#modal-check-in');
 const modalCheckInTime = $('#modal-check-in-time');
 const modalCheckOut = $('#modal-check-out');
 const modalCheckOutTime = $('#modal-check-out-time');
-const basePickerConfig = {
-  allowInput: true,
-  disableMobile: true,
-  static: true,
-  dateFormat: 'Y-m-d',
-  minDate: 'today'
-};
-const timePickerConfig = {
-  enableTime: true,
-  noCalendar: true,
-  dateFormat: 'H:i',
-  time_24hr: true,
-  minuteIncrement: 15,
-  allowInput: true,
-  disableMobile: true,
-  static: true
-};
-let checkInPicker = null;
-let checkOutPicker = null;
-let checkInTimePicker = null;
-let checkOutTimePicker = null;
-if (window.flatpickr) {
-  checkInPicker = window.flatpickr(modalCheckIn, {
-    ...basePickerConfig,
-    onChange: (dates) => {
-      const date = dates[0] || null;
-      checkOutPicker.set('minDate', date ? localDate(date) : 'today');
-      const checkOutDate = checkOutPicker.selectedDates[0];
-      if (date && checkOutDate && checkOutDate < date) checkOutPicker.clear();
+// Native date calendars work with touch, keyboards and the browser locale.
+modalCheckIn.min = localDate(new Date());
+modalCheckOut.min = modalCheckIn.min;
+for (const select of [modalCheckInTime, modalCheckOutTime]) {
+  for (const [label, first, last] of [['Night', 0, 6], ['Morning', 6, 12], ['Afternoon', 12, 18], ['Evening', 18, 24]]) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    for (let hour = first; hour < last; hour++) {
+      for (const minute of [0, 15, 30, 45]) {
+        const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        group.append(new Option(`${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`, value));
+      }
     }
-  });
-  checkInTimePicker = window.flatpickr(modalCheckInTime, { ...timePickerConfig, defaultHour: 12, defaultMinute: 0 });
-  checkOutPicker = window.flatpickr(modalCheckOut, { ...basePickerConfig });
-  checkOutTimePicker = window.flatpickr(modalCheckOutTime, { ...timePickerConfig, defaultHour: 11, defaultMinute: 0 });
+    select.append(group);
+  }
 }
+function updateStay() {
+  modalCheckOut.min = modalCheckIn.value || modalCheckIn.min;
+  if (modalCheckOut.value && modalCheckOut.value < modalCheckOut.min) modalCheckOut.value = '';
+  [modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.setCustomValidity(''));
+  const start = parseDateTime(`${modalCheckIn.value} ${modalCheckInTime.value}`);
+  const end = parseDateTime(`${modalCheckOut.value} ${modalCheckOutTime.value}`);
+  if (start && end && end > start) {
+    const minutes = Math.round((end - start) / 60000);
+    $('#stay-summary').textContent = `Your stay: ${Math.floor(minutes / 60)} hours${minutes % 60 ? ` ${minutes % 60} minutes` : ''}. Times are in IST.`;
+  } else {
+    $('#stay-summary').textContent = start && end ? 'Choose a check-out time after check-in. Times are in IST.' : 'Choose your dates. Times are in IST.';
+  }
+}
+[modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.addEventListener('change', updateStay));
 checkIn.min = localDate(new Date());
 checkOut.min = checkIn.min;
 checkIn.addEventListener('change', () => {
@@ -98,18 +93,11 @@ $('#room-grid').addEventListener('click', event => {
   const checkInTimeValue = '12:00';
   const checkOutDateValue = checkOut.value || '';
   const checkOutTimeValue = '11:00';
-  if (checkInPicker) {
-    checkInPicker.setDate(checkInDateValue, false);
-    checkInTimePicker.setDate(checkInTimeValue, false);
-    checkOutPicker.set('minDate', checkInDateValue || 'today');
-    checkOutPicker.setDate(checkOutDateValue, false);
-    checkOutTimePicker.setDate(checkOutTimeValue, false);
-  } else {
-    modalCheckIn.value = checkInDateValue;
-    modalCheckInTime.value = checkInTimeValue;
-    modalCheckOut.value = checkOutDateValue;
-    modalCheckOutTime.value = checkOutTimeValue;
-  }
+  modalCheckIn.value = checkInDateValue;
+  modalCheckInTime.value = checkInTimeValue;
+  modalCheckOut.value = checkOutDateValue;
+  modalCheckOutTime.value = checkOutTimeValue;
+  updateStay();
   [modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.setCustomValidity(''));
   $('#room-dialog').showModal();
 });
