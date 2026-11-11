@@ -38,6 +38,7 @@ for (const select of [modalCheckInTime, modalCheckOutTime]) {
 function updateStay() {
   modalCheckOut.min = modalCheckIn.value || modalCheckIn.min;
   if (modalCheckOut.value && modalCheckOut.value < modalCheckOut.min) modalCheckOut.value = '';
+  [modalCheckIn, modalCheckOut].forEach(input => { input.parentElement.dataset.empty = String(!input.value); });
   [modalCheckIn, modalCheckInTime, modalCheckOut, modalCheckOutTime].forEach(input => input.setCustomValidity(''));
   const start = parseDateTime(`${modalCheckIn.value} ${modalCheckInTime.value}`);
   const end = parseDateTime(`${modalCheckOut.value} ${modalCheckOutTime.value}`);

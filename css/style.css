@@ -21,3 +21,5 @@
 .flatpickr-current-month,.flatpickr-months .flatpickr-month{color:var(--green)}
 
 .reserve-field input,.reserve-field select{min-height:48px;font-size:14px;font-weight:500;color-scheme:light}.reserve-field select{cursor:pointer;padding-right:8px}.reserve-field input[type=date]{cursor:pointer}.reserve-field input[type=date]::-webkit-calendar-picker-indicator{width:20px;height:20px;padding:2px;cursor:pointer}.stay-summary{font-size:12px;padding:10px 12px;background:var(--pale);border-radius:8px;color:var(--green)}
+
+.date-input{position:relative;min-width:0}.date-placeholder{display:none;position:absolute;left:12px;right:38px;top:50%;transform:translateY(-50%);color:#80877c;font-size:13px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.date-input[data-empty="true"]:not(:focus-within) .date-placeholder{display:block}.date-input[data-empty="true"]:not(:focus-within) input{color:transparent}.date-input[data-empty="true"]:not(:focus-within) input::-webkit-datetime-edit{opacity:0}
