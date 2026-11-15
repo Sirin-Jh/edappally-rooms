@@ -134,7 +134,7 @@ $('#reserve-form').addEventListener('submit', event => {
     guests !== 'any' ? `Guests: ${guests}` : '',
     'Please confirm availability and the nightly rate. Thank you.'
   ].filter(Boolean).join('\n');
-  window.open(`https://wa.me/918667373306?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+  window.open(`https://wa.me/917902285777?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
 });
 $('.dialog-close').addEventListener('click', () => $('#room-dialog').close());
 $('#room-dialog').addEventListener('click', event => { if (event.target === $('#room-dialog')) { const bounds = event.target.getBoundingClientRect(); if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.target.close(); } });
