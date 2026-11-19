@@ -5,6 +5,7 @@ const rooms = [
   { id: 'double-non-ac', type: 'double', ac: 'non-ac', name: 'Double Room — Non-AC', guests: 2 }
 ];
 const state = { type: 'all', ac: 'any', guests: 'any', sort: 'recommended', favorites: new Set() };
+const roomImage = room => room.type === 'single' ? 'images/single-room.jpeg' : 'images/sample-room-image.png';
 try { state.favorites = new Set(JSON.parse(localStorage.getItem('edappally-favorites') || '[]')); } catch {}
 const $ = (selector) => document.querySelector(selector);
 const checkIn = $('#check-in');
@@ -64,7 +65,7 @@ function render() {
   let visible = rooms.filter(room => (state.type === 'all' || room.type === state.type) && (state.ac === 'any' || room.ac === state.ac) && (state.guests === 'any' || room.guests >= Number(state.guests)));
   if (state.sort === 'name') visible.sort((a, b) => a.name.localeCompare(b.name));
   if (state.sort === 'guests') visible.sort((a, b) => a.guests - b.guests);
-  $('#room-grid').innerHTML = visible.map(room => `<article class="room-card"><div class="room-photo"><img src="images/sample-room-image.png" alt="Illustrative room interior at Edappally Rooms" width="644" height="242" loading="lazy"><button class="favorite" data-favorite="${room.id}" aria-label="Save ${room.name}" aria-pressed="${state.favorites.has(room.id)}">${state.favorites.has(room.id) ? '♥' : '♡'}</button></div><div class="room-content"><p class="eyebrow">${room.name.toUpperCase()}</p><h3>${room.name}</h3><p class="room-meta">⌖ ${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'}</p><p class="room-description">${room.ac === 'ac' ? 'Air-conditioned room' : 'Non-air-conditioned room'}</p><div class="stay-prices" aria-label="Room pricing"><div><span>2 hours</span><strong>₹499</strong></div><div><span>3 hours</span><strong>₹699</strong></div><div><span>Full day</span><strong>₹1,200</strong></div></div><button class="button book-now" data-details="${room.id}">Book Now</button></div></article>`).join('');
+  $('#room-grid').innerHTML = visible.map(room => `<article class="room-card"><div class="room-photo"><img src="${roomImage(room)}" style="object-position:${room.type === 'single' ? 'center 72%' : 'center'}" alt="${room.name} interior at Edappally Rooms" width="644" height="242" loading="lazy"><button class="favorite" data-favorite="${room.id}" aria-label="Save ${room.name}" aria-pressed="${state.favorites.has(room.id)}">${state.favorites.has(room.id) ? '♥' : '♡'}</button></div><div class="room-content"><p class="eyebrow">${room.name.toUpperCase()}</p><h3>${room.name}</h3><p class="room-meta">⌖ ${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'}</p><p class="room-description">${room.ac === 'ac' ? 'Air-conditioned room' : 'Non-air-conditioned room'}</p><div class="stay-prices" aria-label="Room pricing"><div><span>2 hours</span><strong>₹499</strong></div><div><span>3 hours</span><strong>₹699</strong></div><div><span>Full day</span><strong>₹1,200</strong></div></div><button class="button book-now" data-details="${room.id}">Book Now</button></div></article>`).join('');
   $('#no-results').hidden = visible.length > 0;
   document.querySelectorAll('[data-ac]').forEach(button => { const active = button.dataset.ac === state.ac; button.classList.toggle('active', active); button.setAttribute('aria-pressed', active); });
   document.querySelectorAll('[data-filter]').forEach(button => { const active = button.dataset.filter === 'ac' ? state.ac === 'ac' && state.type === 'all' : button.dataset.filter === state.type && !(state.ac === 'ac' && state.type === 'all'); button.classList.toggle('active', active); button.setAttribute('aria-pressed', active); });
@@ -88,6 +89,9 @@ $('#room-grid').addEventListener('click', event => {
   if (!details) return;
   const room = rooms.find(room => room.id === details.dataset.details);
   $('#dialog-title').textContent = room.name;
+  $('#room-dialog > img').src = roomImage(room);
+  $('#room-dialog > img').alt = `${room.name} interior at Edappally Rooms`;
+  $('#room-dialog > img').style.objectPosition = room.type === 'single' ? 'center 72%' : 'center';
   $('#dialog-description').textContent = `${room.guests} ${room.guests === 1 ? 'guest' : 'guests'} · ${room.ac === 'ac' ? 'Air-conditioned' : 'Non-air-conditioned'} room. Photo is illustrative; confirm the assigned room when enquiring.`;
   $('#room-dialog').dataset.room = room.id;
   const checkInDateValue = checkIn.value || '';
